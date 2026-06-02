@@ -108,6 +108,22 @@ PlaySplat writes `playability_report.json` and `playability_metrics.csv` for eac
 
 The overall score is an early deterministic research signal, not a final benchmark score. It is intended to make pipeline progress measurable while the representation, algorithms, and evaluation protocol continue to evolve.
 
+## Running Real Scene Experiments
+
+Use `scripts/run_scene_experiment.py` to run PlaySplat over one or more real Gaussian Splat `.ply` scenes and collect summary outputs.
+
+```bash
+python scripts/run_scene_experiment.py --input path/to/scene.ply --scene-id scene_name --output-root outputs/experiments --config configs/default.yaml
+```
+
+For a batch:
+
+```bash
+python scripts/run_scene_experiment.py --input scene1.ply scene2.ply scene3.ply --output-root outputs/experiments --config configs/default.yaml
+```
+
+Each scene writes normal pipeline artifacts under `outputs/experiments/<scene_id>/`. The runner also writes `experiment_summary.csv` and `experiment_summary.json` with scalar playability metrics and failure records for scenes that could not be processed.
+
 ## Planned Milestones
 
 1. Define Gaussian scene input formats and metadata conventions.
