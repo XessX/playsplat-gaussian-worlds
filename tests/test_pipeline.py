@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+from playsplat.cli import main
 from playsplat.pipeline import run_pipeline
 from playsplat.utils.config import PipelineSettings
 
@@ -22,3 +25,9 @@ def test_pipeline_returns_layered_scene(tmp_path) -> None:
     assert result.scene.affordances.labels == ("walkable",)
     assert result.exports[0].target == "webgl"
     assert result.report.status == "placeholder"
+
+
+def test_cli_default_config_runs_without_input(tmp_path: Path) -> None:
+    assert main(["--config", "configs/default.yaml", "--output-dir", str(tmp_path)]) == 0
+    assert not (tmp_path / "gaussian_stats.json").exists()
+    assert not (tmp_path / "proxy_mesh.obj").exists()

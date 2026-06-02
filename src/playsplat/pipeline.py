@@ -7,13 +7,13 @@ from dataclasses import dataclass
 from playsplat.affordance import infer_affordance_layer
 from playsplat.evaluation import PlayabilityReport, evaluate_playability
 from playsplat.export import export_scene
-from playsplat.gaussian import build_visual_splat_layer
-from playsplat.geometry import extract_proxy_geometry
+from playsplat.gaussian import build_visual_splat_layer, filter_gaussians_for_geometry
+from playsplat.geometry import build_voxel_occupancy, extract_proxy_geometry, extract_proxy_mesh
 from playsplat.io import load_gaussian_scene
 from playsplat.navigation import build_navigation_layer
 from playsplat.physics import build_collision_layer
 from playsplat.semantics import infer_semantic_layer
-from playsplat.types import ExportBundle, PlaySplatScene
+from playsplat.types import ExportBundle, PlaySplatScene, ProxyGeometryLayer
 from playsplat.utils.config import PipelineSettings
 
 
@@ -37,6 +37,40 @@ def run_pipeline(settings: PipelineSettings) -> PipelineResult:
     source_scene = load_gaussian_scene(settings.input_path, settings.scene_id)
     visual_layer = build_visual_splat_layer(source_scene)
     proxy_geometry = extract_proxy_geometry(visual_layer, method=settings.proxy_method)
+    if visual_layer.gaussians is not None and settings.proxy_enabled:
+        filtered = filter_gaussians_for_geometry(
+            visual_layer.gaussians,
+            opacity_threshold=settings.opacity_threshold,
+            bounds_quantile=settings.bounds_quantile,
+            max_gaussians=settings.max_gaussians,
+        )
+        occupancy_grid = build_voxel_occupancy(
+            filtered,
+            voxel_size=settings.voxel_size,
+            density_threshold=settings.density_threshold,
+            padding_voxels=settings.padding_voxels,
+            max_grid_voxels=settings.max_grid_voxels,
+        )
+        proxy_mesh = extract_proxy_mesh(occupancy_grid, smooth_sigma=settings.smooth_sigma)
+        proxy_metadata = {
+            "filter": filtered.filter_metadata,
+            "occupancy": occupancy_grid.metadata,
+            "mesh": proxy_mesh.metadata,
+        }
+        proxy_geometry = ProxyGeometryLayer(
+            metadata=visual_layer.metadata,
+            mesh_count=1,
+            vertex_count=int(proxy_mesh.vertices.shape[0]),
+            face_count=int(proxy_mesh.faces.shape[0]),
+            method=proxy_mesh.metadata["method"],
+            attributes={
+                "status": "proxy_mesh_extracted",
+                "filtered_gaussians": filtered,
+                "occupancy_grid": occupancy_grid,
+                "proxy_mesh": proxy_mesh,
+                "proxy_metadata": proxy_metadata,
+            },
+        )
     collision_physics = build_collision_layer(
         proxy_geometry,
         collision_mode=settings.collision_mode,

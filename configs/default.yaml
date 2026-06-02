@@ -19,6 +19,15 @@ geometry:
     enabled: true
     method: placeholder_density_surface
     target_face_count: 50000
+    opacity_threshold: 0.01
+    bounds_quantile: 0.995
+    max_gaussians: 300000
+    voxel_size: 0.05
+    density_threshold: 1.0
+    padding_voxels: 2
+    smooth_sigma: 0.0
+    max_grid_voxels: 20000000
+    output_mesh: proxy_mesh.obj
 
 physics:
   collision:

@@ -62,6 +62,82 @@ class GaussianLayer:
 
 
 @dataclass
+class FilteredGaussianLayer:
+    """Gaussian subset prepared for geometry and collision proxy extraction."""
+
+    positions: NDArray[np.float32]
+    opacity: NDArray[np.float32] | None
+    scales: NDArray[np.float32] | None
+    source_indices: NDArray[np.int64]
+    removed_count: int
+    filter_metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Validate filtered arrays and source index alignment."""
+
+        _validate_matrix("positions", self.positions, columns=3)
+        _validate_vector("opacity", self.opacity, rows=self.gaussian_count)
+        _validate_matrix("scales", self.scales, rows=self.gaussian_count, columns=3)
+        _validate_vector("source_indices", self.source_indices, rows=self.gaussian_count)
+        if self.removed_count < 0:
+            raise ValueError(f"removed_count must be non-negative; got {self.removed_count}.")
+
+    @property
+    def gaussian_count(self) -> int:
+        """Number of Gaussians retained for geometry extraction."""
+
+        return int(self.positions.shape[0])
+
+
+@dataclass
+class VoxelOccupancyGrid:
+    """Voxel density and occupancy grid derived from filtered Gaussians."""
+
+    origin: NDArray[np.float32]
+    voxel_size: float
+    density: NDArray[np.float32]
+    occupied: NDArray[np.bool_]
+    grid_shape: tuple[int, int, int]
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Validate voxel grid consistency."""
+
+        _validate_vector("origin", self.origin, rows=3)
+        if self.voxel_size <= 0.0:
+            raise ValueError(f"voxel_size must be positive; got {self.voxel_size}.")
+        if self.density.ndim != 3:
+            raise ValueError(f"density must be a 3D array; got shape {self.density.shape}.")
+        if self.occupied.ndim != 3:
+            raise ValueError(f"occupied must be a 3D array; got shape {self.occupied.shape}.")
+        if self.density.shape != self.occupied.shape:
+            raise ValueError(
+                "density and occupied arrays must have the same shape; "
+                f"got {self.density.shape} and {self.occupied.shape}."
+            )
+        if tuple(int(dim) for dim in self.density.shape) != self.grid_shape:
+            raise ValueError(
+                f"grid_shape must match density shape; got {self.grid_shape} "
+                f"and {self.density.shape}."
+            )
+
+
+@dataclass
+class ProxyMesh:
+    """Triangular proxy mesh extracted from a voxel occupancy grid."""
+
+    vertices: NDArray[np.float32]
+    faces: NDArray[np.int32]
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Validate proxy mesh array shapes."""
+
+        _validate_matrix("vertices", self.vertices, columns=3)
+        _validate_matrix("faces", self.faces, columns=3)
+
+
+@dataclass
 class VisualSplatLayer:
     """Visual layer that preserves the source splat representation."""
 
@@ -150,7 +226,7 @@ class PlaySplatScene:
 
 def _validate_vector(
     name: str,
-    array: NDArray[np.float32] | None,
+    array: NDArray[Any] | None,
     *,
     rows: int,
 ) -> None:
@@ -162,7 +238,7 @@ def _validate_vector(
 
 def _validate_matrix(
     name: str,
-    array: NDArray[np.float32] | None,
+    array: NDArray[Any] | None,
     *,
     rows: int | None = None,
     columns: int | None = None,

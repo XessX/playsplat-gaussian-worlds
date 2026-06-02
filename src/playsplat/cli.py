@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from playsplat.gaussian import compute_gaussian_stats
+from playsplat.geometry import export_proxy_mesh
 from playsplat.pipeline import run_pipeline
+from playsplat.types import ProxyMesh
 from playsplat.utils.config import load_pipeline_settings
 
 
@@ -56,9 +58,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         stats_path = settings.output_dir / "gaussian_stats.json"
         stats_path.parent.mkdir(parents=True, exist_ok=True)
         with stats_path.open("w", encoding="utf-8") as handle:
-            json.dump(stats, handle, indent=2)
-            handle.write("\n")
+            _dump_json(stats, handle)
         print(f"Gaussian stats saved: {stats_path}")
+
+    proxy_mesh = result.scene.proxy_geometry.attributes.get("proxy_mesh")
+    if isinstance(proxy_mesh, ProxyMesh):
+        mesh_path = export_proxy_mesh(proxy_mesh, settings.output_dir / settings.proxy_output_mesh)
+        proxy_metadata = result.scene.proxy_geometry.attributes.get(
+            "proxy_metadata",
+            proxy_mesh.metadata,
+        )
+        metadata_path = settings.output_dir / "proxy_metadata.json"
+        metadata_path.parent.mkdir(parents=True, exist_ok=True)
+        with metadata_path.open("w", encoding="utf-8") as handle:
+            _dump_json(proxy_metadata, handle)
+        print(f"Proxy mesh saved: {mesh_path}")
+        print(f"Proxy metadata saved: {metadata_path}")
 
     return 0
 
@@ -99,3 +114,20 @@ def _format_value(value: Any) -> str:
     if isinstance(value, float):
         return f"{value:.6g}"
     return str(value)
+
+
+def _dump_json(data: Any, handle: Any) -> None:
+    json.dump(_json_safe(data), handle, indent=2)
+    handle.write("\n")
+
+
+def _json_safe(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, Path):
+        return str(value)
+    if hasattr(value, "item"):
+        return value.item()
+    return value

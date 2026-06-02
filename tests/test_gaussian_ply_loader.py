@@ -108,8 +108,12 @@ def test_cli_writes_gaussian_stats_for_ply_input(tmp_path: Path, capsys: pytest.
 
     captured = capsys.readouterr()
     stats_path = output_dir / "gaussian_stats.json"
+    proxy_path = output_dir / "proxy_mesh.obj"
+    proxy_metadata_path = output_dir / "proxy_metadata.json"
     assert "Gaussian statistics" in captured.out
     assert stats_path.exists()
+    assert proxy_path.exists()
+    assert proxy_metadata_path.exists()
     assert json.loads(stats_path.read_text(encoding="utf-8"))["num_gaussians"] == 2
 
 

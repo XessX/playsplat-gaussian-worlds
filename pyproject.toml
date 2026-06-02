@@ -16,7 +16,10 @@ dependencies = [
   "numpy>=1.24",
   "plyfile>=1.0",
   "PyYAML>=6.0",
-  "tqdm>=4.66"
+  "scikit-image>=0.22",
+  "scipy>=1.11",
+  "tqdm>=4.66",
+  "trimesh>=4.0"
 ]
 
 [project.optional-dependencies]
@@ -45,5 +48,13 @@ python_version = "3.10"
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["plyfile", "yaml"]
+module = [
+  "plyfile",
+  "scipy",
+  "scipy.ndimage",
+  "skimage",
+  "skimage.measure",
+  "trimesh",
+  "yaml"
+]
 ignore_missing_imports = true
