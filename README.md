@@ -150,6 +150,42 @@ Each ablation run writes its own config copy and normal PlaySplat outputs under 
 
 Ablations help analyze trade-offs between voxel resolution, proxy mesh density, simplified collision mesh complexity, walkable area, semantic and affordance readiness, and overall playability metrics.
 
+## Scene Registry
+
+Use a scene registry YAML file to describe benchmark scenes without hard-coding paths in scripts. See `configs/scenes.example.yaml` for the expected format:
+
+```yaml
+scenes:
+  - scene_id: room01
+    input_path: data/scenes/room01/point_cloud.ply
+    category: indoor_room
+    source: independent
+    split: benchmark
+    notes: Independent scene for benchmark.
+```
+
+Local private registries such as `configs/scenes.local.yaml` should stay uncommitted when they contain private dataset paths.
+
+## Running Multi-Scene Benchmarks
+
+Use `scripts/run_benchmark.py` to process a filtered scene registry with shared PlaySplat settings:
+
+```bash
+python scripts/run_benchmark.py --scene-registry configs/scenes.example.yaml --base-config configs/default.yaml --output-root outputs/benchmark --split benchmark --voxel-size 0.1 --target-face-count 10000 --generate-previews
+```
+
+The benchmark runner writes per-scene outputs under `outputs/benchmark/<scene_id>/`, plus `benchmark_summary.csv`, `benchmark_summary.json`, and `benchmark_report.md` with aggregate metrics and category-wise summaries.
+
+## Generating Benchmark Assets
+
+Use `scripts/generate_benchmark_assets.py` to convert a benchmark summary into paper-ready tables and figures:
+
+```bash
+python scripts/generate_benchmark_assets.py --benchmark-summary outputs/benchmark/benchmark_summary.csv --output-dir outputs/paper_assets/benchmark --title "PlaySplat Benchmark"
+```
+
+The generator writes cleaned benchmark tables under `tables/`, scene-level PNG figures under `figures/`, and `benchmark_summary.md` for paper notes.
+
 ## Generating Paper Assets
 
 Use `scripts/generate_paper_assets.py` to convert ablation outputs into paper-ready tables, figures, and Markdown summaries:

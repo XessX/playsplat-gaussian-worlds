@@ -25,6 +25,7 @@ data/*
 !data/.gitkeep
 outputs/*
 !outputs/.gitkeep
+configs/*.local.yaml
 
 # Editor and OS files
 .DS_Store

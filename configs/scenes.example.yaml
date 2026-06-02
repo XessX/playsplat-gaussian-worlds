@@ -1,0 +1,14 @@
+scenes:
+  - scene_id: scene1
+    input_path: data/scenes/scene1/point_cloud.ply
+    category: outdoor
+    source: internal_debug
+    split: debug
+    notes: First real PlaySplat debug scene.
+
+  - scene_id: room01
+    input_path: data/scenes/room01/point_cloud.ply
+    category: indoor_room
+    source: independent
+    split: benchmark
+    notes: Independent scene for benchmark.
