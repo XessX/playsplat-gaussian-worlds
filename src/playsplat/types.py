@@ -247,6 +247,16 @@ class ExportBundle:
     status: str = "planned"
 
 
+@dataclass(frozen=True)
+class EngineExportManifest:
+    """Manifest describing an engine-ready PlaySplat export bundle."""
+
+    target: str
+    scene_id: str
+    files: dict[str, str]
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
 @dataclass
 class PlaySplatScene:
     """Layered playability-aware scene representation."""

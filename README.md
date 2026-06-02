@@ -96,6 +96,12 @@ python .\scripts\run_pipeline.py --config .\configs\default.yaml
 
 The current implementation is a scaffold. The functions return placeholder typed objects so researchers can start wiring experiments, tests, and notebooks without committing to final algorithms too early.
 
+## Engine Export Bundles
+
+PlaySplat can generate research-ready export bundles for Unity, PlayCanvas, and generic WebGL. Bundles are written under `outputs/exports/<target>/` and contain a `manifest.json`, target-specific import README, available visual splat references, proxy collision geometry, scene-structure meshes, and metadata files.
+
+These bundles are packaging artifacts, not full engine integrations. They document how to import the visual Gaussian splat, use proxy meshes for collision, use floor or walkable meshes for navigation, and treat wall or obstacle meshes as blockers.
+
 ## Planned Milestones
 
 1. Define Gaussian scene input formats and metadata conventions.

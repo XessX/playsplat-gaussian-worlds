@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any, Sequence
 
+from playsplat.export import export_scene
 from playsplat.gaussian import compute_gaussian_stats
 from playsplat.geometry import export_proxy_mesh, export_structure_meshes, scene_structure_to_dict
 from playsplat.pipeline import run_pipeline
@@ -89,6 +90,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             if structure_exports:
                 exported = ", ".join(str(path) for path in structure_exports.values())
                 print(f"Structure meshes saved: {exported}")
+
+    refreshed_exports = export_scene(result.scene, settings.output_dir, settings.export_targets)
+    if refreshed_exports:
+        export_targets = ", ".join(bundle.target for bundle in refreshed_exports)
+        print(f"Engine export bundles refreshed: {export_targets}")
 
     return 0
 

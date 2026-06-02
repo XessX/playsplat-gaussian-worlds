@@ -4,6 +4,7 @@ from playsplat.pipeline import PipelineResult, run_pipeline
 from playsplat.types import (
     AffordanceLayer,
     CollisionPhysicsLayer,
+    EngineExportManifest,
     ExportBundle,
     FilteredGaussianLayer,
     GaussianLayer,
@@ -23,6 +24,7 @@ from playsplat.types import (
 __all__ = [
     "AffordanceLayer",
     "CollisionPhysicsLayer",
+    "EngineExportManifest",
     "ExportBundle",
     "FilteredGaussianLayer",
     "GaussianLayer",
