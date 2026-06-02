@@ -124,6 +124,22 @@ python scripts/run_scene_experiment.py --input scene1.ply scene2.ply scene3.ply 
 
 Each scene writes normal pipeline artifacts under `outputs/experiments/<scene_id>/`. The runner also writes `experiment_summary.csv` and `experiment_summary.json` with scalar playability metrics and failure records for scenes that could not be processed.
 
+## Generating Debug Previews
+
+Use `scripts/generate_previews.py` to create quick PNG previews for a processed scene:
+
+```bash
+python scripts/generate_previews.py --scene-output outputs/experiments/scene1
+```
+
+To generate previews during an experiment run:
+
+```bash
+python scripts/run_scene_experiment.py --input data/scenes/scene1/point_cloud.ply --scene-id scene1 --generate-previews
+```
+
+Previews are written under `outputs/experiments/<scene_id>/previews/` when the corresponding files exist. Current preview targets include Gaussian point distribution, proxy mesh, floor/wall/obstacle/walkable meshes, and the playability summary card.
+
 ## Planned Milestones
 
 1. Define Gaussian scene input formats and metadata conventions.

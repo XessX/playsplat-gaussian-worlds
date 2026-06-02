@@ -19,6 +19,7 @@ if str(SRC_ROOT) not in sys.path:
 
 from playsplat.cli import main as run_pipeline_cli  # noqa: E402
 from playsplat.utils.config import load_pipeline_settings  # noqa: E402
+from playsplat.visualization import generate_scene_previews  # noqa: E402
 
 
 SUMMARY_FIELDS = (
@@ -72,6 +73,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("configs/default.yaml"),
         help="Base PlaySplat YAML config.",
     )
+    parser.add_argument(
+        "--generate-previews",
+        action="store_true",
+        help="Generate debug preview PNGs after each successful scene run.",
+    )
     return parser
 
 
@@ -95,6 +101,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             scene_id=scene_id,
             output_dir=scene_output_dir,
             config_path=args.config,
+            generate_previews=args.generate_previews,
         )
         rows.append(row)
 
@@ -111,6 +118,7 @@ def run_single_scene(
     scene_id: str,
     output_dir: Path,
     config_path: Path,
+    generate_previews: bool = False,
 ) -> dict[str, Any]:
     """Run one scene and return a summary row."""
 
@@ -131,6 +139,9 @@ def run_single_scene(
         report = _load_report(output_dir / "playability_report.json")
         row.update(_summary_from_report(report))
         row["status"] = str(report.get("status", "completed"))
+        if generate_previews:
+            previews = generate_scene_previews(output_dir)
+            print(f"Generated {len(previews)} preview(s) for scene '{scene_id}'")
     except Exception as exc:
         output_dir.mkdir(parents=True, exist_ok=True)
         row["status"] = "failed"
