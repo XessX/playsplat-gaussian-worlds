@@ -1,0 +1,61 @@
+project:
+  name: playsplat
+  scene_id: demo_scene
+
+input:
+  path: null
+  format: gaussian-splat
+
+output:
+  directory: outputs
+
+gaussian:
+  visual_layer:
+    enabled: true
+    preserve_original_splats: true
+
+geometry:
+  proxy:
+    enabled: true
+    method: placeholder_density_surface
+    target_face_count: 50000
+
+physics:
+  collision:
+    enabled: true
+    mode: static
+    primitive_budget: 1024
+
+navigation:
+  walkable:
+    enabled: true
+    agent_radius: 0.4
+    max_slope_degrees: 35.0
+
+semantics:
+  enabled: true
+  vocabulary:
+    - floor
+    - wall
+    - door
+    - chair
+    - table
+    - stairs
+    - obstacle
+
+affordance:
+  enabled: true
+  labels:
+    - walkable
+    - climbable
+    - sittable
+    - movable
+    - openable
+    - interactable
+
+export:
+  enabled: true
+  targets:
+    - unity
+    - playcanvas
+    - webgl

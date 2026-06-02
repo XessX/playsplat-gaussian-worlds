@@ -1,0 +1,118 @@
+# PlaySplat
+
+PlaySplat is a research prototype for **Playability-Aware Gaussian Splatting for Physics-Ready Interactive 3D Worlds**.
+
+The long-term goal is to convert 3D Gaussian Splatting scenes into layered interactive scene representations that can be simulated, navigated, annotated, and exported to real-time engines.
+
+## Research Goal
+
+3D Gaussian Splatting produces high-quality visual reconstructions, but those reconstructions are not directly playable. They usually lack explicit surfaces, stable collision geometry, traversability labels, semantic structure, and affordances. PlaySplat explores how to bridge that gap.
+
+The target representation contains:
+
+1. A visual Gaussian splat layer.
+2. A proxy geometry layer.
+3. A collision and physics layer.
+4. A navigation and walkable layer.
+5. A semantic scene layer.
+6. An affordance layer.
+7. Export targets for Unity, PlayCanvas, and WebGL.
+
+This first version is intentionally lightweight. It contains a clean Python package structure, typed placeholder APIs, a default config, and a CLI skeleton for running the future pipeline.
+
+## Planned Pipeline
+
+```text
+Gaussian scene input
+        |
+        v
+Visual splat layer
+        |
+        v
+Proxy geometry extraction
+        |
+        v
+Collision and physics approximation
+        |
+        v
+Navigation and walkability estimation
+        |
+        v
+Semantic scene understanding
+        |
+        v
+Affordance inference
+        |
+        v
+Unity / PlayCanvas / WebGL export
+```
+
+## Repository Layout
+
+```text
+playsplat/
+  configs/              YAML experiment and pipeline configs
+  data/                 Local datasets and scene inputs
+  docs/                 Notes, papers, diagrams, and design docs
+  outputs/              Generated artifacts and exports
+  scripts/              Research scripts and CLI entry points
+  src/playsplat/        Python package source
+    io/                 Scene loading and serialization
+    gaussian/           Gaussian splat data structures and visual layer logic
+    geometry/           Proxy meshes and geometry extraction
+    physics/            Collision and physics-ready approximations
+    navigation/         Walkability, navmesh, and agent traversal
+    semantics/          Semantic scene representations
+    affordance/         Interaction affordance inference
+    export/             Engine and WebGL export interfaces
+    evaluation/         Metrics and benchmark helpers
+    utils/              Config, logging, and shared utilities
+  tests/                Unit and smoke tests
+```
+
+## Quick Start
+
+Use Python 3.10 or newer.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install -e .
+python scripts/run_pipeline.py --config configs/default.yaml
+```
+
+On Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+pip install -e .
+python .\scripts\run_pipeline.py --config .\configs\default.yaml
+```
+
+## Current Status
+
+The current implementation is a scaffold. The functions return placeholder typed objects so researchers can start wiring experiments, tests, and notebooks without committing to final algorithms too early.
+
+## Planned Milestones
+
+1. Define Gaussian scene input formats and metadata conventions.
+2. Build proxy geometry extraction baselines from splat density and depth cues.
+3. Generate collision primitives and static rigid-body approximations.
+4. Estimate walkable surfaces and navigation regions.
+5. Attach open-vocabulary semantic labels to scene regions and objects.
+6. Infer affordances such as walkable, climbable, sit-able, movable, openable, and interactable.
+7. Add export adapters for Unity, PlayCanvas, and WebGL.
+8. Evaluate playability with collision validity, navigation success, interaction coverage, and visual alignment metrics.
+
+## Development
+
+Run tests with:
+
+```bash
+pytest
+```
+
+The code is designed to stay research-friendly: small modules, typed dataclasses, simple interfaces, and room for experimental methods to be swapped in as the project evolves.
