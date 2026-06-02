@@ -28,6 +28,14 @@ geometry:
     smooth_sigma: 0.0
     max_grid_voxels: 20000000
     output_mesh: proxy_mesh.obj
+  structure:
+    enabled: true
+    up_axis: y
+    max_floor_slope_degrees: 35.0
+    floor_height_quantile: 0.20
+    floor_height_tolerance: 0.25
+    wall_normal_tolerance: 0.35
+    min_region_area: 0.01
 
 physics:
   collision:

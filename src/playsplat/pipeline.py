@@ -8,7 +8,12 @@ from playsplat.affordance import infer_affordance_layer
 from playsplat.evaluation import PlayabilityReport, evaluate_playability
 from playsplat.export import export_scene
 from playsplat.gaussian import build_visual_splat_layer, filter_gaussians_for_geometry
-from playsplat.geometry import build_voxel_occupancy, extract_proxy_geometry, extract_proxy_mesh
+from playsplat.geometry import (
+    build_voxel_occupancy,
+    classify_proxy_mesh_structure,
+    extract_proxy_geometry,
+    extract_proxy_mesh,
+)
 from playsplat.io import load_gaussian_scene
 from playsplat.navigation import build_navigation_layer
 from playsplat.physics import build_collision_layer
@@ -52,11 +57,26 @@ def run_pipeline(settings: PipelineSettings) -> PipelineResult:
             max_grid_voxels=settings.max_grid_voxels,
         )
         proxy_mesh = extract_proxy_mesh(occupancy_grid, smooth_sigma=settings.smooth_sigma)
+        scene_structure = None
+        structure_metadata = None
+        if settings.structure_enabled:
+            scene_structure = classify_proxy_mesh_structure(
+                proxy_mesh,
+                up_axis=settings.structure_up_axis,
+                max_floor_slope_degrees=settings.max_floor_slope_degrees,
+                floor_height_quantile=settings.floor_height_quantile,
+                floor_height_tolerance=settings.floor_height_tolerance,
+                wall_normal_tolerance=settings.wall_normal_tolerance,
+                min_region_area=settings.min_region_area,
+            )
+            structure_metadata = scene_structure.metadata
         proxy_metadata = {
             "filter": filtered.filter_metadata,
             "occupancy": occupancy_grid.metadata,
             "mesh": proxy_mesh.metadata,
         }
+        if structure_metadata is not None:
+            proxy_metadata["structure"] = structure_metadata
         proxy_geometry = ProxyGeometryLayer(
             metadata=visual_layer.metadata,
             mesh_count=1,
@@ -69,6 +89,8 @@ def run_pipeline(settings: PipelineSettings) -> PipelineResult:
                 "occupancy_grid": occupancy_grid,
                 "proxy_mesh": proxy_mesh,
                 "proxy_metadata": proxy_metadata,
+                "scene_structure": scene_structure,
+                "structure_metadata": structure_metadata,
             },
         )
     collision_physics = build_collision_layer(

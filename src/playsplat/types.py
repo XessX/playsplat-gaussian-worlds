@@ -138,6 +138,42 @@ class ProxyMesh:
 
 
 @dataclass
+class SurfaceRegion:
+    """Labeled proxy-mesh face region used for playability reasoning."""
+
+    label: str
+    face_indices: NDArray[np.int64]
+    area: float
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Validate a surface region."""
+
+        _validate_vector("face_indices", self.face_indices, rows=self.face_indices.shape[0])
+        if self.face_indices.dtype.kind not in {"i", "u"}:
+            raise ValueError("face_indices must contain integer indices.")
+        if self.area < 0.0:
+            raise ValueError(f"area must be non-negative; got {self.area}.")
+
+    @property
+    def face_count(self) -> int:
+        """Number of mesh faces in the region."""
+
+        return int(self.face_indices.shape[0])
+
+
+@dataclass
+class SceneStructure:
+    """Basic geometric structure detected from a proxy collision mesh."""
+
+    floor: SurfaceRegion | None
+    walls: SurfaceRegion | None
+    obstacles: SurfaceRegion | None
+    walkable: SurfaceRegion | None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class VisualSplatLayer:
     """Visual layer that preserves the source splat representation."""
 

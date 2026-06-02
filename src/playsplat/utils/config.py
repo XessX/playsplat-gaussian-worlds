@@ -28,6 +28,13 @@ class PipelineSettings:
     smooth_sigma: float = 0.0
     max_grid_voxels: int = 20_000_000
     proxy_output_mesh: Path = Path("proxy_mesh.obj")
+    structure_enabled: bool = True
+    structure_up_axis: str = "y"
+    max_floor_slope_degrees: float = 35.0
+    floor_height_quantile: float = 0.20
+    floor_height_tolerance: float = 0.25
+    wall_normal_tolerance: float = 0.35
+    min_region_area: float = 0.01
     collision_mode: str = "static"
     agent_radius: float = 0.4
     export_targets: tuple[str, ...] = ("unity", "playcanvas", "webgl")
@@ -62,6 +69,7 @@ def load_pipeline_settings(config_path: Path) -> PipelineSettings:
     output_config = _mapping_at(config, "output")
     geometry_config = _mapping_at(config, "geometry")
     proxy_config = _mapping_at(geometry_config, "proxy")
+    structure_config = _mapping_at(geometry_config, "structure")
     physics_config = _mapping_at(config, "physics")
     collision_config = _mapping_at(physics_config, "collision")
     navigation_config = _mapping_at(config, "navigation")
@@ -84,6 +92,25 @@ def load_pipeline_settings(config_path: Path) -> PipelineSettings:
     smooth_sigma = _float_or_default(proxy_config.get("smooth_sigma"), 0.0)
     max_grid_voxels = _int_or_default(proxy_config.get("max_grid_voxels"), 20_000_000)
     proxy_output_mesh = _path_or_default(proxy_config.get("output_mesh"), Path("proxy_mesh.obj"))
+    structure_enabled = _bool_or_default(structure_config.get("enabled"), True)
+    structure_up_axis = str(structure_config.get("up_axis", "y"))
+    max_floor_slope_degrees = _float_or_default(
+        structure_config.get("max_floor_slope_degrees"),
+        35.0,
+    )
+    floor_height_quantile = _float_or_default(
+        structure_config.get("floor_height_quantile"),
+        0.20,
+    )
+    floor_height_tolerance = _float_or_default(
+        structure_config.get("floor_height_tolerance"),
+        0.25,
+    )
+    wall_normal_tolerance = _float_or_default(
+        structure_config.get("wall_normal_tolerance"),
+        0.35,
+    )
+    min_region_area = _float_or_default(structure_config.get("min_region_area"), 0.01)
     collision_mode = str(collision_config.get("mode", "static"))
     agent_radius = _float_or_default(walkable_config.get("agent_radius"), 0.4)
     export_targets = _string_tuple(export_config.get("targets"), ("unity", "playcanvas", "webgl"))
@@ -105,6 +132,13 @@ def load_pipeline_settings(config_path: Path) -> PipelineSettings:
         smooth_sigma=smooth_sigma,
         max_grid_voxels=max_grid_voxels,
         proxy_output_mesh=proxy_output_mesh,
+        structure_enabled=structure_enabled,
+        structure_up_axis=structure_up_axis,
+        max_floor_slope_degrees=max_floor_slope_degrees,
+        floor_height_quantile=floor_height_quantile,
+        floor_height_tolerance=floor_height_tolerance,
+        wall_normal_tolerance=wall_normal_tolerance,
+        min_region_area=min_region_area,
         collision_mode=collision_mode,
         agent_radius=agent_radius,
         export_targets=export_targets,

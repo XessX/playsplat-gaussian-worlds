@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from playsplat.gaussian import compute_gaussian_stats
-from playsplat.geometry import export_proxy_mesh
+from playsplat.geometry import export_proxy_mesh, export_structure_meshes, scene_structure_to_dict
 from playsplat.pipeline import run_pipeline
-from playsplat.types import ProxyMesh
+from playsplat.types import ProxyMesh, SceneStructure
 from playsplat.utils.config import load_pipeline_settings
 
 
@@ -74,6 +74,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             _dump_json(proxy_metadata, handle)
         print(f"Proxy mesh saved: {mesh_path}")
         print(f"Proxy metadata saved: {metadata_path}")
+
+        scene_structure = result.scene.proxy_geometry.attributes.get("scene_structure")
+        if isinstance(scene_structure, SceneStructure):
+            structure_path = settings.output_dir / "scene_structure.json"
+            with structure_path.open("w", encoding="utf-8") as handle:
+                _dump_json(scene_structure_to_dict(scene_structure), handle)
+            structure_exports = export_structure_meshes(
+                proxy_mesh,
+                scene_structure,
+                settings.output_dir,
+            )
+            print(f"Scene structure saved: {structure_path}")
+            if structure_exports:
+                exported = ", ".join(str(path) for path in structure_exports.values())
+                print(f"Structure meshes saved: {exported}")
 
     return 0
 
