@@ -54,6 +54,13 @@ def test_engine_export_bundle_creates_target_directory_and_manifest(
     assert "collision_mesh.obj" in (
         bundle.output_path / readme_name
     ).read_text(encoding="utf-8")
+    layer_summary = manifest["metadata"]["layer_summary"]
+    assert layer_summary["semantics"]["status"] == "geometry_semantic_layer"
+    assert layer_summary["semantics"]["is_geometry_derived"] is True
+    assert layer_summary["semantics"]["is_placeholder"] is False
+    assert layer_summary["affordances"]["status"] == "geometry_affordance_layer"
+    assert layer_summary["affordances"]["is_geometry_derived"] is True
+    assert layer_summary["affordances"]["is_placeholder"] is False
 
 
 def test_engine_export_bundle_missing_assets_do_not_crash(tmp_path: Path) -> None:
@@ -122,10 +129,16 @@ def _fake_scene(source_path: Path | None) -> PlaySplatScene:
             navmesh_polygon_count=2,
             attributes={"status": "walkable_region_detected", "walkable_area": 1.0},
         ),
-        semantics=SemanticSceneLayer(metadata=metadata, label_count=1, labels=("floor",)),
+        semantics=SemanticSceneLayer(
+            metadata=metadata,
+            label_count=1,
+            labels=("floor",),
+            attributes={"status": "geometry_semantic_layer"},
+        ),
         affordances=AffordanceLayer(
             metadata=metadata,
             affordance_count=1,
             labels=("walkable",),
+            attributes={"status": "geometry_affordance_layer"},
         ),
     )

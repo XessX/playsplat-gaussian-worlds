@@ -53,8 +53,15 @@ def compute_playability_metrics(scene: PlaySplatScene) -> dict[str, Any]:
     has_proxy_mesh = scene.proxy_geometry.attributes.get("proxy_mesh") is not None
     has_scene_structure = bool(structure_metadata)
     has_walkable_region = scene.navigation.walkable_region_count > 0
-    semantics_present = scene.semantics.label_count > 0
-    affordances_present = scene.affordances.affordance_count > 0
+    semantic_status = str(scene.semantics.attributes.get("status", "unknown"))
+    affordance_status = str(scene.affordances.attributes.get("status", "unknown"))
+    geometry_semantics_available = semantic_status == "geometry_semantic_layer"
+    geometry_affordances_available = affordance_status == "geometry_affordance_layer"
+    semantics_ready = semantic_status != "placeholder_semantic_layer" and scene.semantics.label_count > 0
+    affordances_ready = (
+        affordance_status != "placeholder_affordance_layer"
+        and scene.affordances.affordance_count > 0
+    )
 
     metrics: dict[str, Any] = {
         "gaussian_count": gaussian_count,
@@ -79,6 +86,12 @@ def compute_playability_metrics(scene: PlaySplatScene) -> dict[str, Any]:
             scene.proxy_geometry.face_count,
         ),
         "simplification_status": collision_metadata.get("status", "missing"),
+        "semantic_status": semantic_status,
+        "affordance_status": affordance_status,
+        "geometry_semantics_available": geometry_semantics_available,
+        "geometry_affordances_available": geometry_affordances_available,
+        "semantic_label_count": scene.semantics.label_count,
+        "affordance_label_count": scene.affordances.affordance_count,
         "floor_area": floor_area,
         "wall_area": wall_area,
         "obstacle_area": obstacle_area,
@@ -119,8 +132,8 @@ def compute_playability_metrics(scene: PlaySplatScene) -> dict[str, Any]:
         walkable_present=has_walkable_region,
         structure_present=has_scene_structure,
         export_possible=metrics["engine_export_target_count"] > 0,
-        semantics_present=semantics_present,
-        affordances_present=affordances_present,
+        semantics_present=semantics_ready,
+        affordances_present=affordances_ready,
     )
     return metrics
 
@@ -134,8 +147,10 @@ def evaluate_playability(scene: PlaySplatScene) -> PlayabilityReport:
         metrics["collision_mesh_available"] or metrics["collider_count"] > 0 or metrics["has_proxy_mesh"]
     )
     navigation_ready = bool(metrics["walkable_region_count"] > 0)
-    semantics_ready = scene.semantics.label_count > 0
-    affordances_ready = scene.affordances.affordance_count > 0
+    semantics_ready = bool(metrics["semantic_status"] != "placeholder_semantic_layer")
+    semantics_ready = semantics_ready and bool(metrics["semantic_label_count"] > 0)
+    affordances_ready = bool(metrics["affordance_status"] != "placeholder_affordance_layer")
+    affordances_ready = affordances_ready and bool(metrics["affordance_label_count"] > 0)
     score = _float_metric(metrics["overall_playability_score"])
     status = _status_from_score(score, metrics)
     summary = {
@@ -146,10 +161,13 @@ def evaluate_playability(scene: PlaySplatScene) -> PlayabilityReport:
         "navigation_ready": navigation_ready,
         "semantics_ready": semantics_ready,
         "affordances_ready": affordances_ready,
+        "semantic_status": metrics["semantic_status"],
+        "affordance_status": metrics["affordance_status"],
         "warning_count": len(warnings),
         "score_definition": (
             "Prototype layer-completeness score averaging visual, proxy, collision, "
-            "walkable, structure, export, semantics, and affordance availability."
+            "walkable, structure, export, non-placeholder semantics, and "
+            "non-placeholder affordance availability."
         ),
     }
     return PlayabilityReport(
@@ -163,7 +181,7 @@ def evaluate_playability(scene: PlaySplatScene) -> PlayabilityReport:
         warnings=warnings,
         notes=(
             "This is a prototype completeness/readiness score, not a validated benchmark.",
-            "Semantic and affordance layers may still be config-level placeholders.",
+            "Placeholder semantic and affordance layers are reported but do not count as ready.",
         ),
     )
 
@@ -288,9 +306,9 @@ def _warnings_for_metrics(scene: PlaySplatScene, metrics: dict[str, Any]) -> lis
         warnings.append("missing walkable region")
     if not metrics["has_scene_structure"]:
         warnings.append("missing structure detection")
-    if scene.semantics.attributes.get("status") == "placeholder_semantic_layer":
+    if metrics["semantic_status"] == "placeholder_semantic_layer":
         warnings.append("semantics are placeholder")
-    if scene.affordances.attributes.get("status") == "placeholder_affordance_layer":
+    if metrics["affordance_status"] == "placeholder_affordance_layer":
         warnings.append("affordances are placeholder")
     return warnings
 

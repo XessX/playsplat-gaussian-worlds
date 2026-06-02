@@ -108,6 +108,8 @@ def _layer_summary(scene: PlaySplatScene) -> dict[str, Any]:
     collision_metadata = scene.proxy_geometry.attributes.get("collision_mesh_metadata", {})
     if not isinstance(collision_metadata, dict):
         collision_metadata = {}
+    semantic_status = str(scene.semantics.attributes.get("status", "placeholder"))
+    affordance_status = str(scene.affordances.attributes.get("status", "placeholder"))
     return {
         "visual_layer": {
             "representation": scene.visual.representation,
@@ -143,12 +145,16 @@ def _layer_summary(scene: PlaySplatScene) -> dict[str, Any]:
         "semantics": {
             "label_count": scene.semantics.label_count,
             "labels": list(scene.semantics.labels),
-            "status": scene.semantics.attributes.get("status", "placeholder"),
+            "status": semantic_status,
+            "is_placeholder": semantic_status == "placeholder_semantic_layer",
+            "is_geometry_derived": semantic_status == "geometry_semantic_layer",
         },
         "affordances": {
             "affordance_count": scene.affordances.affordance_count,
             "labels": list(scene.affordances.labels),
-            "status": scene.affordances.attributes.get("status", "placeholder"),
+            "status": affordance_status,
+            "is_placeholder": affordance_status == "placeholder_affordance_layer",
+            "is_geometry_derived": affordance_status == "geometry_affordance_layer",
         },
     }
 
@@ -157,7 +163,7 @@ def _notes_for_bundle(missing_assets: list[str]) -> list[str]:
     notes = [
         "This bundle is a research packaging artifact, not a complete engine integration.",
         "The visual splat, collision mesh, proxy geometry, structure meshes, and navigation metadata are generated or referenced when available.",
-        "Semantic labels and affordances are still placeholder research layers unless produced by future modules.",
+        "Semantic labels and affordances are deterministic geometry-derived baselines when scene structure is available; otherwise they are marked as placeholders.",
     ]
     if missing_assets:
         notes.append(

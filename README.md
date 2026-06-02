@@ -108,6 +108,14 @@ PlaySplat now writes a simplified `collision_mesh.obj` alongside the higher-deta
 
 The original proxy mesh is preserved for structure detection, debugging, and higher-detail inspection. Floor, wall, obstacle, and walkable meshes remain labeled region outputs for navigation and visual debugging rather than the primary whole-scene collider.
 
+## Geometry-Derived Semantics and Affordances
+
+PlaySplat currently uses deterministic geometry-derived labels when scene structure is available. Detected floor, wall, obstacle, and walkable regions are converted into baseline semantic labels such as `floor`, `wall`, `obstacle`, and `walkable_surface`.
+
+Those labels then produce simple affordances: floor and walkable surfaces become `walkable` and `support`, walls become `blocking`, and obstacles become `blocking` plus `interactable_candidate`. These are baseline labels for research bookkeeping, not learned semantic segmentation.
+
+When geometry structure is missing, semantic and affordance layers are marked as placeholders. Placeholder layers are reported in metrics and manifests, but they do not count as fully ready in the playability score.
+
 ## Playability Metrics
 
 PlaySplat writes `playability_report.json` and `playability_metrics.csv` for each CLI run. The current metrics measure prototype readiness and scene-layer completeness: visual Gaussian availability, proxy mesh complexity, walkable area, obstacle and wall areas, navigation readiness, collision readiness, and export readiness.

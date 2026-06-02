@@ -45,6 +45,10 @@ def test_scene_experiment_creates_per_scene_outputs_and_summary(tmp_path: Path) 
     assert summary["scenes"][0]["gaussian_count"] == 2
     assert summary["scenes"][0]["collision_face_count"] != ""
     assert summary["scenes"][0]["simplification_status"] != ""
+    assert summary["scenes"][0]["semantic_status"] != ""
+    assert summary["scenes"][0]["affordance_status"] != ""
+    assert summary["scenes"][0]["semantic_label_count"] != ""
+    assert summary["scenes"][0]["affordance_label_count"] != ""
 
 
 def test_experiment_summary_writers_create_csv_and_json(tmp_path: Path) -> None:
@@ -57,6 +61,10 @@ def test_experiment_summary_writers_create_csv_and_json(tmp_path: Path) -> None:
             "collision_face_count": 1,
             "collision_face_reduction_ratio": 0.5,
             "simplification_status": "target_reached",
+            "semantic_status": "geometry_semantic_layer",
+            "affordance_status": "geometry_affordance_layer",
+            "semantic_label_count": 4,
+            "affordance_label_count": 4,
             "overall_playability_score": 0.75,
         }
     ]
@@ -69,6 +77,8 @@ def test_experiment_summary_writers_create_csv_and_json(tmp_path: Path) -> None:
     json_data = json.loads(json_path.read_text(encoding="utf-8"))
     assert csv_rows[0]["scene_id"] == "a"
     assert csv_rows[0]["collision_face_count"] == "1"
+    assert csv_rows[0]["semantic_status"] == "geometry_semantic_layer"
+    assert csv_rows[0]["affordance_label_count"] == "4"
     assert json_data["scenes"][0]["overall_playability_score"] == 0.75
 
 

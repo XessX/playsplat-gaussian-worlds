@@ -39,6 +39,10 @@ def test_metrics_computed_from_placeholder_scene() -> None:
     assert metrics["has_visual_gaussian_layer"] is False
     assert metrics["proxy_mesh_available"] is False
     assert metrics["collision_mesh_available"] is False
+    assert metrics["semantic_status"] == "placeholder_semantic_layer"
+    assert metrics["affordance_status"] == "placeholder_affordance_layer"
+    assert report.semantics_ready is False
+    assert report.affordances_ready is False
     assert metrics["overall_playability_score"] < 0.5
     assert report.status == "placeholder"
 
@@ -55,11 +59,45 @@ def test_metrics_computed_from_synthetic_structured_scene() -> None:
     assert metrics["collision_face_count"] == 1
     assert metrics["collision_face_reduction_ratio"] == 0.5
     assert metrics["simplification_status"] == "target_reached"
+    assert metrics["semantic_status"] == "geometry_semantic_layer"
+    assert metrics["affordance_status"] == "geometry_affordance_layer"
+    assert metrics["geometry_semantics_available"] is True
+    assert metrics["geometry_affordances_available"] is True
+    assert metrics["semantic_label_count"] == 4
+    assert metrics["affordance_label_count"] == 4
     assert metrics["floor_area"] == 2.0
     assert metrics["walkable_area_ratio"] == 0.5
     assert metrics["engine_export_target_count"] == 2
     assert report.navigation_ready is True
+    assert report.semantics_ready is True
+    assert report.affordances_ready is True
     assert report.summary["overall_playability_score"] >= 0.75
+
+
+def test_placeholder_semantics_and_affordances_do_not_count_as_ready() -> None:
+    scene = _structured_scene_with_placeholder_meaning()
+
+    metrics = compute_playability_metrics(scene)
+    report = evaluate_playability(scene)
+
+    assert metrics["semantic_label_count"] == 2
+    assert metrics["affordance_label_count"] == 2
+    assert metrics["semantic_status"] == "placeholder_semantic_layer"
+    assert metrics["affordance_status"] == "placeholder_affordance_layer"
+    assert report.semantics_ready is False
+    assert report.affordances_ready is False
+    assert report.summary["overall_playability_score"] < 1.0
+    assert "semantics are placeholder" in report.warnings
+    assert "affordances are placeholder" in report.warnings
+
+
+def test_playability_score_improves_with_geometry_derived_layers() -> None:
+    placeholder_report = evaluate_playability(_structured_scene_with_placeholder_meaning())
+    geometry_report = evaluate_playability(_structured_scene())
+
+    assert geometry_report.summary["overall_playability_score"] > placeholder_report.summary[
+        "overall_playability_score"
+    ]
 
 
 def test_warnings_appear_when_key_layers_are_missing() -> None:
@@ -80,6 +118,10 @@ def test_write_playability_report_creates_valid_json(tmp_path: Path) -> None:
     data = json.loads(written.read_text(encoding="utf-8"))
     assert data["summary"]["status"] == report.status
     assert data["metrics"]["proxy_face_count"] == 2
+    assert data["metrics"]["semantic_status"] == "geometry_semantic_layer"
+    assert data["metrics"]["affordance_status"] == "geometry_affordance_layer"
+    assert data["summary"]["semantics_ready"] is True
+    assert data["summary"]["affordances_ready"] is True
     assert isinstance(data["warnings"], list)
 
 
@@ -218,14 +260,37 @@ def _structured_scene() -> PlaySplatScene:
         ),
         semantics=SemanticSceneLayer(
             metadata=metadata,
-            label_count=1,
-            labels=("floor",),
-            attributes={"status": "prototype_semantics"},
+            label_count=4,
+            labels=("floor", "wall", "obstacle", "walkable_surface"),
+            attributes={
+                "status": "geometry_semantic_layer",
+                "source": "scene_structure",
+            },
         ),
         affordances=AffordanceLayer(
             metadata=metadata,
-            affordance_count=1,
-            labels=("walkable",),
-            attributes={"status": "prototype_affordances"},
+            affordance_count=4,
+            labels=("walkable", "support", "blocking", "interactable_candidate"),
+            attributes={
+                "status": "geometry_affordance_layer",
+                "source": "geometry_semantics_and_navigation",
+            },
         ),
     )
+
+
+def _structured_scene_with_placeholder_meaning() -> PlaySplatScene:
+    scene = _structured_scene()
+    scene.semantics = SemanticSceneLayer(
+        metadata=scene.metadata,
+        label_count=2,
+        labels=("floor", "wall"),
+        attributes={"status": "placeholder_semantic_layer"},
+    )
+    scene.affordances = AffordanceLayer(
+        metadata=scene.metadata,
+        affordance_count=2,
+        labels=("walkable", "blocking"),
+        attributes={"status": "placeholder_affordance_layer"},
+    )
+    return scene
