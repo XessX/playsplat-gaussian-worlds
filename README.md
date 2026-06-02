@@ -138,6 +138,18 @@ python scripts/run_scene_experiment.py --input scene1.ply scene2.ply scene3.ply 
 
 Each scene writes normal pipeline artifacts under `outputs/experiments/<scene_id>/`. The runner also writes `experiment_summary.csv` and `experiment_summary.json` with scalar playability metrics and failure records for scenes that could not be processed.
 
+## Running Ablation Experiments
+
+Use `scripts/run_ablation_experiment.py` to evaluate voxel resolution and collision simplification targets over a real Gaussian Splat scene:
+
+```bash
+python scripts/run_ablation_experiment.py --input data/scenes/scene1/point_cloud.ply --scene-id scene1 --base-config configs/default.yaml --output-root outputs/ablations/scene1 --voxel-sizes 0.08 0.1 0.15 0.2 --target-face-counts 10000 25000 50000 --generate-previews
+```
+
+Each ablation run writes its own config copy and normal PlaySplat outputs under `outputs/ablations/<scene_variant>/`. The runner also writes `ablation_summary.csv`, `ablation_summary.json`, and `best_runs.json`.
+
+Ablations help analyze trade-offs between voxel resolution, proxy mesh density, simplified collision mesh complexity, walkable area, semantic and affordance readiness, and overall playability metrics.
+
 ## Generating Debug Previews
 
 Use `scripts/generate_previews.py` to create quick PNG previews for a processed scene:
