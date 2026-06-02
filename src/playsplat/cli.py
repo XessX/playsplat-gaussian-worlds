@@ -14,7 +14,12 @@ from playsplat.evaluation import (
 )
 from playsplat.export import export_scene
 from playsplat.gaussian import compute_gaussian_stats
-from playsplat.geometry import export_proxy_mesh, export_structure_meshes, scene_structure_to_dict
+from playsplat.geometry import (
+    export_collision_mesh,
+    export_proxy_mesh,
+    export_structure_meshes,
+    scene_structure_to_dict,
+)
 from playsplat.pipeline import run_pipeline
 from playsplat.types import ProxyMesh, SceneStructure
 from playsplat.utils.config import load_pipeline_settings
@@ -74,6 +79,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             "proxy_metadata",
             proxy_mesh.metadata,
         )
+        collision_mesh = result.scene.proxy_geometry.attributes.get("collision_mesh")
+        if isinstance(collision_mesh, ProxyMesh):
+            collision_path = export_collision_mesh(
+                collision_mesh,
+                settings.output_dir / settings.collision_output_mesh,
+            )
+            if isinstance(proxy_metadata, dict):
+                collision_metadata = proxy_metadata.get("collision_mesh")
+                if isinstance(collision_metadata, dict):
+                    collision_metadata["output_mesh"] = str(settings.collision_output_mesh)
+            print(f"Collision mesh saved: {collision_path}")
+
         metadata_path = settings.output_dir / "proxy_metadata.json"
         metadata_path.parent.mkdir(parents=True, exist_ok=True)
         with metadata_path.open("w", encoding="utf-8") as handle:

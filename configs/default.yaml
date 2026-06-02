@@ -28,6 +28,13 @@ geometry:
     smooth_sigma: 0.0
     max_grid_voxels: 20000000
     output_mesh: proxy_mesh.obj
+  simplification:
+    enabled: true
+    target_face_count: 50000
+    method: vertex_clustering
+    clustering_voxel_size: null
+    max_iterations: 8
+    output_mesh: collision_mesh.obj
   structure:
     enabled: true
     up_axis: y

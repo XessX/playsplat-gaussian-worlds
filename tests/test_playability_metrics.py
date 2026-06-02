@@ -38,6 +38,7 @@ def test_metrics_computed_from_placeholder_scene() -> None:
     assert metrics["gaussian_count"] == 0
     assert metrics["has_visual_gaussian_layer"] is False
     assert metrics["proxy_mesh_available"] is False
+    assert metrics["collision_mesh_available"] is False
     assert metrics["overall_playability_score"] < 0.5
     assert report.status == "placeholder"
 
@@ -50,6 +51,10 @@ def test_metrics_computed_from_synthetic_structured_scene() -> None:
 
     assert metrics["gaussian_count"] == 10
     assert metrics["proxy_mesh_available"] is True
+    assert metrics["collision_mesh_available"] is True
+    assert metrics["collision_face_count"] == 1
+    assert metrics["collision_face_reduction_ratio"] == 0.5
+    assert metrics["simplification_status"] == "target_reached"
     assert metrics["floor_area"] == 2.0
     assert metrics["walkable_area_ratio"] == 0.5
     assert metrics["engine_export_target_count"] == 2
@@ -157,6 +162,22 @@ def _structured_scene() -> PlaySplatScene:
         ),
         faces=np.asarray([[0, 1, 2], [0, 2, 1]], dtype=np.int32),
     )
+    collision_mesh = ProxyMesh(
+        vertices=proxy_mesh.vertices.copy(),
+        faces=np.asarray([[0, 1, 2]], dtype=np.int32),
+        metadata={
+            "original_vertex_count": 3,
+            "original_face_count": 2,
+            "simplified_vertex_count": 3,
+            "simplified_face_count": 1,
+            "target_face_count": 1,
+            "method": "vertex_clustering",
+            "clustering_voxel_size": 0.5,
+            "achieved_reduction_ratio": 0.5,
+            "iterations": 1,
+            "status": "target_reached",
+        },
+    )
     proxy_geometry = ProxyGeometryLayer(
         metadata=metadata,
         mesh_count=1,
@@ -166,6 +187,8 @@ def _structured_scene() -> PlaySplatScene:
         attributes={
             "status": "proxy_mesh_extracted",
             "proxy_mesh": proxy_mesh,
+            "collision_mesh": collision_mesh,
+            "collision_mesh_metadata": collision_mesh.metadata,
             "scene_structure": structure,
             "structure_metadata": structure.metadata,
             "engine_exports": (

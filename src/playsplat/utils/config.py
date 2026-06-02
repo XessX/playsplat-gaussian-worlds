@@ -28,6 +28,12 @@ class PipelineSettings:
     smooth_sigma: float = 0.0
     max_grid_voxels: int = 20_000_000
     proxy_output_mesh: Path = Path("proxy_mesh.obj")
+    simplification_enabled: bool = True
+    simplification_target_face_count: int = 50_000
+    simplification_method: str = "vertex_clustering"
+    simplification_clustering_voxel_size: float | None = None
+    simplification_max_iterations: int = 8
+    collision_output_mesh: Path = Path("collision_mesh.obj")
     structure_enabled: bool = True
     structure_up_axis: str = "y"
     max_floor_slope_degrees: float = 35.0
@@ -69,6 +75,7 @@ def load_pipeline_settings(config_path: Path) -> PipelineSettings:
     output_config = _mapping_at(config, "output")
     geometry_config = _mapping_at(config, "geometry")
     proxy_config = _mapping_at(geometry_config, "proxy")
+    simplification_config = _mapping_at(geometry_config, "simplification")
     structure_config = _mapping_at(geometry_config, "structure")
     physics_config = _mapping_at(config, "physics")
     collision_config = _mapping_at(physics_config, "collision")
@@ -92,6 +99,26 @@ def load_pipeline_settings(config_path: Path) -> PipelineSettings:
     smooth_sigma = _float_or_default(proxy_config.get("smooth_sigma"), 0.0)
     max_grid_voxels = _int_or_default(proxy_config.get("max_grid_voxels"), 20_000_000)
     proxy_output_mesh = _path_or_default(proxy_config.get("output_mesh"), Path("proxy_mesh.obj"))
+    simplification_enabled = _bool_or_default(simplification_config.get("enabled"), True)
+    simplification_target_face_count = _int_or_default(
+        simplification_config.get("target_face_count"),
+        50_000,
+    )
+    simplification_method = str(
+        simplification_config.get("method", "vertex_clustering"),
+    )
+    simplification_clustering_voxel_size = _optional_float(
+        simplification_config.get("clustering_voxel_size"),
+        None,
+    )
+    simplification_max_iterations = _int_or_default(
+        simplification_config.get("max_iterations"),
+        8,
+    )
+    collision_output_mesh = _path_or_default(
+        simplification_config.get("output_mesh"),
+        Path("collision_mesh.obj"),
+    )
     structure_enabled = _bool_or_default(structure_config.get("enabled"), True)
     structure_up_axis = str(structure_config.get("up_axis", "y"))
     max_floor_slope_degrees = _float_or_default(
@@ -132,6 +159,12 @@ def load_pipeline_settings(config_path: Path) -> PipelineSettings:
         smooth_sigma=smooth_sigma,
         max_grid_voxels=max_grid_voxels,
         proxy_output_mesh=proxy_output_mesh,
+        simplification_enabled=simplification_enabled,
+        simplification_target_face_count=simplification_target_face_count,
+        simplification_method=simplification_method,
+        simplification_clustering_voxel_size=simplification_clustering_voxel_size,
+        simplification_max_iterations=simplification_max_iterations,
+        collision_output_mesh=collision_output_mesh,
         structure_enabled=structure_enabled,
         structure_up_axis=structure_up_axis,
         max_floor_slope_degrees=max_floor_slope_degrees,
@@ -198,6 +231,12 @@ def _optional_int(value: Any, default: int | None) -> int | None:
     if value is None or value == "":
         return default
     return int(value)
+
+
+def _optional_float(value: Any, default: float | None) -> float | None:
+    if value is None or value == "":
+        return default
+    return float(value)
 
 
 def _bool_or_default(value: Any, default: bool) -> bool:

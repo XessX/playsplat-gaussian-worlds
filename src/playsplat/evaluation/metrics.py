@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from playsplat.types import ExportBundle, PlaySplatScene, SceneStructure
+from playsplat.types import ExportBundle, PlaySplatScene, ProxyMesh, SceneStructure
 
 
 @dataclass(frozen=True)
@@ -37,6 +37,18 @@ def compute_playability_metrics(scene: PlaySplatScene) -> dict[str, Any]:
     wall_area = _float_metric(structure_metadata.get("wall_area", 0.0))
     floor_area = _float_metric(structure_metadata.get("floor_area", 0.0))
     engine_exports = _engine_exports(scene)
+    collision_mesh = scene.proxy_geometry.attributes.get("collision_mesh")
+    collision_metadata = scene.proxy_geometry.attributes.get("collision_mesh_metadata", {})
+    if not isinstance(collision_metadata, dict):
+        collision_metadata = {}
+    if isinstance(collision_mesh, ProxyMesh):
+        collision_mesh_available = True
+        collision_vertex_count = int(collision_mesh.vertices.shape[0])
+        collision_face_count = int(collision_mesh.faces.shape[0])
+    else:
+        collision_mesh_available = False
+        collision_vertex_count = 0
+        collision_face_count = 0
 
     has_proxy_mesh = scene.proxy_geometry.attributes.get("proxy_mesh") is not None
     has_scene_structure = bool(structure_metadata)
@@ -54,6 +66,19 @@ def compute_playability_metrics(scene: PlaySplatScene) -> dict[str, Any]:
         "proxy_mesh_count": scene.proxy_geometry.mesh_count,
         "proxy_face_to_gaussian_ratio": _ratio(scene.proxy_geometry.face_count, gaussian_count),
         "proxy_vertex_to_gaussian_ratio": _ratio(scene.proxy_geometry.vertex_count, gaussian_count),
+        "collision_mesh_available": collision_mesh_available,
+        "collision_vertex_count": collision_vertex_count,
+        "collision_face_count": collision_face_count,
+        "collision_face_reduction_ratio": _collision_reduction_ratio(
+            collision_metadata,
+            scene.proxy_geometry.face_count,
+            collision_face_count,
+        ),
+        "collision_face_to_proxy_face_ratio": _ratio(
+            collision_face_count,
+            scene.proxy_geometry.face_count,
+        ),
+        "simplification_status": collision_metadata.get("status", "missing"),
         "floor_area": floor_area,
         "wall_area": wall_area,
         "obstacle_area": obstacle_area,
@@ -88,7 +113,8 @@ def compute_playability_metrics(scene: PlaySplatScene) -> dict[str, Any]:
     metrics["overall_playability_score"] = _overall_playability_score(
         visual_present=metrics["has_visual_gaussian_layer"],
         proxy_present=has_proxy_mesh,
-        collision_present=scene.collision_physics.collider_count > 0
+        collision_present=collision_mesh_available
+        or scene.collision_physics.collider_count > 0
         or scene.proxy_geometry.mesh_count > 0,
         walkable_present=has_walkable_region,
         structure_present=has_scene_structure,
@@ -104,7 +130,9 @@ def evaluate_playability(scene: PlaySplatScene) -> PlayabilityReport:
 
     metrics = compute_playability_metrics(scene)
     warnings = _warnings_for_metrics(scene, metrics)
-    collision_ready = bool(metrics["collider_count"] > 0 or metrics["has_proxy_mesh"])
+    collision_ready = bool(
+        metrics["collision_mesh_available"] or metrics["collider_count"] > 0 or metrics["has_proxy_mesh"]
+    )
     navigation_ready = bool(metrics["walkable_region_count"] > 0)
     semantics_ready = scene.semantics.label_count > 0
     affordances_ready = scene.affordances.affordance_count > 0
@@ -215,6 +243,7 @@ def _ratio(numerator: float | int, denominator: float | int) -> float | None:
 def _export_readiness_score(metrics: dict[str, Any]) -> float:
     checks = (
         bool(metrics["has_proxy_mesh"]),
+        bool(metrics["collision_mesh_available"]),
         bool(metrics["has_floor_mesh"] or metrics["has_walkable_mesh"]),
         bool(metrics["has_wall_mesh"] or metrics["has_obstacle_mesh"]),
         bool(metrics["has_scene_structure"]),
@@ -253,6 +282,8 @@ def _warnings_for_metrics(scene: PlaySplatScene, metrics: dict[str, Any]) -> lis
         warnings.append("missing visual Gaussian layer")
     if not metrics["has_proxy_mesh"]:
         warnings.append("missing proxy mesh")
+    if metrics["has_proxy_mesh"] and not metrics["collision_mesh_available"]:
+        warnings.append("missing collision mesh")
     if metrics["walkable_region_count"] == 0:
         warnings.append("missing walkable region")
     if not metrics["has_scene_structure"]:
@@ -284,6 +315,19 @@ def _float_metric(value: Any) -> float:
     if value is None:
         return 0.0
     return round(float(value), 7)
+
+
+def _collision_reduction_ratio(
+    collision_metadata: dict[str, Any],
+    proxy_face_count: int,
+    collision_face_count: int,
+) -> float:
+    metadata_ratio = collision_metadata.get("achieved_reduction_ratio")
+    if metadata_ratio is not None:
+        return _float_metric(metadata_ratio)
+    if proxy_face_count <= 0:
+        return 0.0
+    return _float_metric(1.0 - (float(collision_face_count) / float(proxy_face_count)))
 
 
 def _json_safe(value: Any) -> Any:

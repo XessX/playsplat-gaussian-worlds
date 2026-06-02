@@ -50,6 +50,10 @@ def test_engine_export_bundle_creates_target_directory_and_manifest(
     assert manifest["metadata"]["project_name"] == "PlaySplat"
     assert "layer_summary" in manifest["metadata"]
     assert "proxy_mesh" in manifest["files"]
+    assert "collision_mesh" in manifest["files"]
+    assert "collision_mesh.obj" in (
+        bundle.output_path / readme_name
+    ).read_text(encoding="utf-8")
 
 
 def test_engine_export_bundle_missing_assets_do_not_crash(tmp_path: Path) -> None:
@@ -82,6 +86,7 @@ def _write_fake_assets(output_dir: Path) -> None:
     for filename in (
         "source_scene.ply",
         "proxy_mesh.obj",
+        "collision_mesh.obj",
         "floor_mesh.obj",
         "wall_mesh.obj",
         "obstacle_mesh.obj",

@@ -33,6 +33,7 @@ def test_scene_experiment_creates_per_scene_outputs_and_summary(tmp_path: Path) 
     assert scene_dir.exists()
     assert (scene_dir / "gaussian_stats.json").exists()
     assert (scene_dir / "proxy_mesh.obj").exists()
+    assert (scene_dir / "collision_mesh.obj").exists()
     assert (scene_dir / "playability_report.json").exists()
     assert (scene_dir / "playability_metrics.csv").exists()
     assert (output_root / "experiment_summary.csv").exists()
@@ -42,6 +43,8 @@ def test_scene_experiment_creates_per_scene_outputs_and_summary(tmp_path: Path) 
     assert summary["scenes"][0]["scene_id"] == "scene_one"
     assert summary["scenes"][0]["status"] in {"partial", "ready_prototype", "placeholder"}
     assert summary["scenes"][0]["gaussian_count"] == 2
+    assert summary["scenes"][0]["collision_face_count"] != ""
+    assert summary["scenes"][0]["simplification_status"] != ""
 
 
 def test_experiment_summary_writers_create_csv_and_json(tmp_path: Path) -> None:
@@ -51,6 +54,9 @@ def test_experiment_summary_writers_create_csv_and_json(tmp_path: Path) -> None:
             "input_path": "a.ply",
             "status": "ready_prototype",
             "gaussian_count": 2,
+            "collision_face_count": 1,
+            "collision_face_reduction_ratio": 0.5,
+            "simplification_status": "target_reached",
             "overall_playability_score": 0.75,
         }
     ]
@@ -62,6 +68,7 @@ def test_experiment_summary_writers_create_csv_and_json(tmp_path: Path) -> None:
         csv_rows = list(csv.DictReader(handle))
     json_data = json.loads(json_path.read_text(encoding="utf-8"))
     assert csv_rows[0]["scene_id"] == "a"
+    assert csv_rows[0]["collision_face_count"] == "1"
     assert json_data["scenes"][0]["overall_playability_score"] == 0.75
 
 

@@ -8,7 +8,7 @@ from pathlib import Path
 import shutil
 from typing import Any
 
-from playsplat.types import EngineExportManifest, ExportBundle, PlaySplatScene
+from playsplat.types import EngineExportManifest, ExportBundle, PlaySplatScene, ProxyMesh
 
 
 SUPPORTED_ENGINE_TARGETS = ("unity", "playcanvas", "webgl")
@@ -79,6 +79,7 @@ def _asset_sources(scene: PlaySplatScene, output_dir: Path) -> dict[str, Path | 
     return {
         "visual_gaussian_ply": scene.metadata.source_path,
         "proxy_mesh": output_dir / "proxy_mesh.obj",
+        "collision_mesh": output_dir / "collision_mesh.obj",
         "floor_mesh": output_dir / "floor_mesh.obj",
         "wall_mesh": output_dir / "wall_mesh.obj",
         "obstacle_mesh": output_dir / "obstacle_mesh.obj",
@@ -103,6 +104,10 @@ def _bundle_filename(asset_name: str, source_path: Path) -> str:
 
 
 def _layer_summary(scene: PlaySplatScene) -> dict[str, Any]:
+    collision_mesh = scene.proxy_geometry.attributes.get("collision_mesh")
+    collision_metadata = scene.proxy_geometry.attributes.get("collision_mesh_metadata", {})
+    if not isinstance(collision_metadata, dict):
+        collision_metadata = {}
     return {
         "visual_layer": {
             "representation": scene.visual.representation,
@@ -115,6 +120,14 @@ def _layer_summary(scene: PlaySplatScene) -> dict[str, Any]:
             "vertex_count": scene.proxy_geometry.vertex_count,
             "face_count": scene.proxy_geometry.face_count,
             "status": scene.proxy_geometry.attributes.get("status", "unknown"),
+            "collision_mesh_available": isinstance(collision_mesh, ProxyMesh),
+            "collision_vertex_count": int(collision_mesh.vertices.shape[0])
+            if isinstance(collision_mesh, ProxyMesh)
+            else 0,
+            "collision_face_count": int(collision_mesh.faces.shape[0])
+            if isinstance(collision_mesh, ProxyMesh)
+            else 0,
+            "simplification_status": collision_metadata.get("status", "missing"),
         },
         "collision_physics": {
             "mode": scene.collision_physics.mode,
@@ -143,7 +156,7 @@ def _layer_summary(scene: PlaySplatScene) -> dict[str, Any]:
 def _notes_for_bundle(missing_assets: list[str]) -> list[str]:
     notes = [
         "This bundle is a research packaging artifact, not a complete engine integration.",
-        "The visual splat, proxy geometry, structure meshes, and navigation metadata are generated or referenced when available.",
+        "The visual splat, collision mesh, proxy geometry, structure meshes, and navigation metadata are generated or referenced when available.",
         "Semantic labels and affordances are still placeholder research layers unless produced by future modules.",
     ]
     if missing_assets:
@@ -182,13 +195,15 @@ def _target_readme(target: str, manifest: EngineExportManifest) -> str:
 def _unity_readme_body() -> str:
     return """## Unity Import Notes
 
-Expected assets include a visual Gaussian splat `.ply`, `proxy_mesh.obj`, floor or walkable meshes, and wall or obstacle meshes.
+Expected assets include a visual Gaussian splat `.ply`, `collision_mesh.obj`, `proxy_mesh.obj`, floor or walkable meshes, and wall or obstacle meshes.
 
 Suggested setup:
 
 - Import the splat with any compatible Gaussian Splatting Unity plugin or renderer.
 - Treat the splat as a non-collider visual layer.
-- Add `proxy_mesh.obj`, `wall_mesh.obj`, or `obstacle_mesh.obj` as hidden MeshCollider objects.
+- Use `collision_mesh.obj` as the first MeshCollider candidate for physics.
+- Keep `proxy_mesh.obj` as higher-detail debug geometry or a fallback collider.
+- Use `wall_mesh.obj` and `obstacle_mesh.obj` as labeled blocker/debug meshes.
 - Use `walkable_mesh.obj` or `floor_mesh.obj` with NavMeshSurface baking.
 - Keep visual and collision layers separate so physics does not depend on splat rendering.
 """
@@ -200,7 +215,8 @@ def _playcanvas_readme_body() -> str:
 Suggested setup:
 
 - Use a compatible splat viewer or runtime for the visual Gaussian layer.
-- Load `proxy_mesh.obj` as coarse collision geometry.
+- Load `collision_mesh.obj` as coarse collision geometry.
+- Keep `proxy_mesh.obj` for higher-detail inspection or fallback collision.
 - Use `walkable_mesh.obj` to constrain player or agent movement.
 - Use `wall_mesh.obj` and `obstacle_mesh.obj` as blockers.
 - Read `scene_structure.json` for floor, wall, obstacle, and walkable labels.
@@ -213,7 +229,8 @@ def _webgl_readme_body() -> str:
 Suggested setup:
 
 - Render the visual splat with a compatible WebGL Gaussian splatting renderer.
-- Use the proxy mesh as collision geometry for a physics engine.
+- Use `collision_mesh.obj` as collision geometry for a physics engine.
+- Keep `proxy_mesh.obj` as the higher-detail proxy for inspection and debugging.
 - Use `scene_structure.json` to attach layer labels to floor, wall, obstacle, and walkable surfaces.
 - Treat this bundle as import metadata and assets, not a full browser runtime.
 """

@@ -13,6 +13,7 @@ from playsplat.geometry import (
     classify_proxy_mesh_structure,
     extract_proxy_geometry,
     extract_proxy_mesh,
+    simplify_proxy_mesh,
 )
 from playsplat.io import load_gaussian_scene
 from playsplat.navigation import build_navigation_layer
@@ -57,6 +58,17 @@ def run_pipeline(settings: PipelineSettings) -> PipelineResult:
             max_grid_voxels=settings.max_grid_voxels,
         )
         proxy_mesh = extract_proxy_mesh(occupancy_grid, smooth_sigma=settings.smooth_sigma)
+        collision_mesh = None
+        collision_mesh_metadata = None
+        if settings.simplification_enabled:
+            collision_mesh = simplify_proxy_mesh(
+                proxy_mesh,
+                target_face_count=settings.simplification_target_face_count,
+                method=settings.simplification_method,
+                clustering_voxel_size=settings.simplification_clustering_voxel_size,
+                max_iterations=settings.simplification_max_iterations,
+            )
+            collision_mesh_metadata = collision_mesh.metadata
         scene_structure = None
         structure_metadata = None
         if settings.structure_enabled:
@@ -74,7 +86,10 @@ def run_pipeline(settings: PipelineSettings) -> PipelineResult:
             "filter": filtered.filter_metadata,
             "occupancy": occupancy_grid.metadata,
             "mesh": proxy_mesh.metadata,
+            "proxy_mesh": proxy_mesh.metadata,
         }
+        if collision_mesh_metadata is not None:
+            proxy_metadata["collision_mesh"] = collision_mesh_metadata
         if structure_metadata is not None:
             proxy_metadata["structure"] = structure_metadata
         proxy_geometry = ProxyGeometryLayer(
@@ -88,6 +103,8 @@ def run_pipeline(settings: PipelineSettings) -> PipelineResult:
                 "filtered_gaussians": filtered,
                 "occupancy_grid": occupancy_grid,
                 "proxy_mesh": proxy_mesh,
+                "collision_mesh": collision_mesh,
+                "collision_mesh_metadata": collision_mesh_metadata,
                 "proxy_metadata": proxy_metadata,
                 "scene_structure": scene_structure,
                 "structure_metadata": structure_metadata,

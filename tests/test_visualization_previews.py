@@ -37,14 +37,16 @@ def test_preview_directory_creation(tmp_path: Path) -> None:
     scene_dir = tmp_path / "scene"
     scene_dir.mkdir()
     _write_tiny_obj(scene_dir / "proxy_mesh.obj")
+    _write_tiny_obj(scene_dir / "collision_mesh.obj")
     _write_fake_report(scene_dir / "playability_report.json")
 
     previews = generate_scene_previews(scene_dir)
 
     assert (scene_dir / "previews").exists()
     assert (scene_dir / "previews" / "proxy_mesh.png").exists()
+    assert (scene_dir / "previews" / "collision_mesh.png").exists()
     assert (scene_dir / "previews" / "playability_summary.png").exists()
-    assert set(previews) == {"proxy_mesh", "playability_summary"}
+    assert set(previews) == {"proxy_mesh", "collision_mesh", "playability_summary"}
 
 
 def test_missing_files_do_not_crash_preview_script(tmp_path: Path) -> None:
@@ -82,6 +84,8 @@ def _write_fake_report(path: Path) -> Path:
                 "metrics": {
                     "gaussian_count": 10,
                     "proxy_face_count": 1,
+                    "collision_face_count": 1,
+                    "collision_face_reduction_ratio": 0.0,
                     "floor_area": 1.0,
                     "wall_area": 2.0,
                     "obstacle_area": 3.0,

@@ -100,7 +100,13 @@ The current implementation is a scaffold. The functions return placeholder typed
 
 PlaySplat can generate research-ready export bundles for Unity, PlayCanvas, and generic WebGL. Bundles are written under `outputs/exports/<target>/` and contain a `manifest.json`, target-specific import README, available visual splat references, proxy collision geometry, scene-structure meshes, and metadata files.
 
-These bundles are packaging artifacts, not full engine integrations. They document how to import the visual Gaussian splat, use proxy meshes for collision, use floor or walkable meshes for navigation, and treat wall or obstacle meshes as blockers.
+These bundles are packaging artifacts, not full engine integrations. They document how to import the visual Gaussian splat, use `collision_mesh.obj` for physics, keep proxy meshes for inspection, use floor or walkable meshes for navigation, and treat wall or obstacle meshes as blockers.
+
+## Collision Mesh Simplification
+
+PlaySplat now writes a simplified `collision_mesh.obj` alongside the higher-detail `proxy_mesh.obj` when geometry simplification is enabled. The collision mesh is generated with deterministic vertex clustering, records before/after face counts in `proxy_metadata.json`, and is intended as the first candidate for MeshCollider or physics-engine collision import.
+
+The original proxy mesh is preserved for structure detection, debugging, and higher-detail inspection. Floor, wall, obstacle, and walkable meshes remain labeled region outputs for navigation and visual debugging rather than the primary whole-scene collider.
 
 ## Playability Metrics
 
@@ -138,7 +144,7 @@ To generate previews during an experiment run:
 python scripts/run_scene_experiment.py --input data/scenes/scene1/point_cloud.ply --scene-id scene1 --generate-previews
 ```
 
-Previews are written under `outputs/experiments/<scene_id>/previews/` when the corresponding files exist. Current preview targets include Gaussian point distribution, proxy mesh, floor/wall/obstacle/walkable meshes, and the playability summary card.
+Previews are written under `outputs/experiments/<scene_id>/previews/` when the corresponding files exist. Current preview targets include Gaussian point distribution, proxy mesh, collision mesh, floor/wall/obstacle/walkable meshes, and the playability summary card.
 
 ## Planned Milestones
 

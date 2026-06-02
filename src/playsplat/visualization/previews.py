@@ -120,6 +120,11 @@ def render_playability_summary_card(report_path: str | Path, output_path: str | 
         ("status", report.get("status", summary.get("status", "unknown"))),
         ("gaussian_count", metrics.get("gaussian_count", "n/a")),
         ("proxy_face_count", metrics.get("proxy_face_count", "n/a")),
+        ("collision_face_count", metrics.get("collision_face_count", "n/a")),
+        (
+            "collision_face_reduction_ratio",
+            metrics.get("collision_face_reduction_ratio", "n/a"),
+        ),
         ("floor_area", metrics.get("floor_area", "n/a")),
         ("wall_area", metrics.get("wall_area", "n/a")),
         ("obstacle_area", metrics.get("obstacle_area", "n/a")),
@@ -175,6 +180,7 @@ def generate_scene_previews(scene_output: str | Path) -> dict[str, Path]:
 
     mesh_specs = (
         ("proxy_mesh", "proxy_mesh.obj", "Proxy Mesh"),
+        ("collision_mesh", "collision_mesh.obj", "Collision Mesh"),
         ("floor_mesh", "floor_mesh.obj", "Floor Mesh"),
         ("wall_mesh", "wall_mesh.obj", "Wall Mesh"),
         ("obstacle_mesh", "obstacle_mesh.obj", "Obstacle Mesh"),
