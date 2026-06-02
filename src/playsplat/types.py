@@ -6,6 +6,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+from numpy.typing import NDArray
+
 
 @dataclass(frozen=True)
 class SceneMetadata:
@@ -27,12 +30,45 @@ class GaussianSplatScene:
 
 
 @dataclass
+class GaussianLayer:
+    """Structured Gaussian splatting layer loaded from a source scene file."""
+
+    positions: NDArray[np.float32]
+    opacity: NDArray[np.float32] | None = None
+    scales: NDArray[np.float32] | None = None
+    rotations: NDArray[np.float32] | None = None
+    colors: NDArray[np.float32] | None = None
+    color_format: str | None = None
+    features_dc: NDArray[np.float32] | None = None
+    features_rest: NDArray[np.float32] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Validate array shapes early so downstream modules can trust them."""
+
+        _validate_matrix("positions", self.positions, columns=3)
+        _validate_vector("opacity", self.opacity, rows=self.gaussian_count)
+        _validate_matrix("scales", self.scales, rows=self.gaussian_count, columns=3)
+        _validate_matrix("rotations", self.rotations, rows=self.gaussian_count, columns=4)
+        _validate_matrix("colors", self.colors, rows=self.gaussian_count, columns=3)
+        _validate_matrix("features_dc", self.features_dc, rows=self.gaussian_count, columns=3)
+        _validate_matrix("features_rest", self.features_rest, rows=self.gaussian_count)
+
+    @property
+    def gaussian_count(self) -> int:
+        """Number of Gaussians represented by this layer."""
+
+        return int(self.positions.shape[0])
+
+
+@dataclass
 class VisualSplatLayer:
     """Visual layer that preserves the source splat representation."""
 
     metadata: SceneMetadata
     gaussian_count: int
     representation: str = "3d-gaussian-splatting"
+    gaussians: GaussianLayer | None = None
     attributes: dict[str, Any] = field(default_factory=dict)
 
 
@@ -110,3 +146,32 @@ class PlaySplatScene:
     navigation: NavigationLayer
     semantics: SemanticSceneLayer
     affordances: AffordanceLayer
+
+
+def _validate_vector(
+    name: str,
+    array: NDArray[np.float32] | None,
+    *,
+    rows: int,
+) -> None:
+    if array is None:
+        return
+    if array.ndim != 1 or array.shape[0] != rows:
+        raise ValueError(f"{name} must have shape ({rows},); got {array.shape}.")
+
+
+def _validate_matrix(
+    name: str,
+    array: NDArray[np.float32] | None,
+    *,
+    rows: int | None = None,
+    columns: int | None = None,
+) -> None:
+    if array is None:
+        return
+    if array.ndim != 2:
+        raise ValueError(f"{name} must be a 2D array; got shape {array.shape}.")
+    if rows is not None and array.shape[0] != rows:
+        raise ValueError(f"{name} must have {rows} rows; got shape {array.shape}.")
+    if columns is not None and array.shape[1] != columns:
+        raise ValueError(f"{name} must have {columns} columns; got shape {array.shape}.")
