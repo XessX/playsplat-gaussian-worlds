@@ -102,6 +102,12 @@ PlaySplat can generate research-ready export bundles for Unity, PlayCanvas, and 
 
 These bundles are packaging artifacts, not full engine integrations. They document how to import the visual Gaussian splat, use proxy meshes for collision, use floor or walkable meshes for navigation, and treat wall or obstacle meshes as blockers.
 
+## Playability Metrics
+
+PlaySplat writes `playability_report.json` and `playability_metrics.csv` for each CLI run. The current metrics measure prototype readiness and scene-layer completeness: visual Gaussian availability, proxy mesh complexity, walkable area, obstacle and wall areas, navigation readiness, collision readiness, and export readiness.
+
+The overall score is an early deterministic research signal, not a final benchmark score. It is intended to make pipeline progress measurable while the representation, algorithms, and evaluation protocol continue to evolve.
+
 ## Planned Milestones
 
 1. Define Gaussian scene input formats and metadata conventions.

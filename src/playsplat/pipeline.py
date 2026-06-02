@@ -123,5 +123,6 @@ def run_pipeline(settings: PipelineSettings) -> PipelineResult:
         affordances=affordances,
     )
     exports = tuple(export_scene(scene, settings.output_dir, settings.export_targets))
+    scene.proxy_geometry.attributes["engine_exports"] = exports
     report = evaluate_playability(scene)
     return PipelineResult(scene=scene, exports=exports, report=report)

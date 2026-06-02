@@ -31,3 +31,5 @@ def test_cli_default_config_runs_without_input(tmp_path: Path) -> None:
     assert main(["--config", "configs/default.yaml", "--output-dir", str(tmp_path)]) == 0
     assert not (tmp_path / "gaussian_stats.json").exists()
     assert not (tmp_path / "proxy_mesh.obj").exists()
+    assert (tmp_path / "playability_report.json").exists()
+    assert (tmp_path / "playability_metrics.csv").exists()

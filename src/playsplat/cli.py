@@ -7,6 +7,11 @@ import json
 from pathlib import Path
 from typing import Any, Sequence
 
+from playsplat.evaluation import (
+    evaluate_playability,
+    write_playability_metrics_csv,
+    write_playability_report,
+)
 from playsplat.export import export_scene
 from playsplat.gaussian import compute_gaussian_stats
 from playsplat.geometry import export_proxy_mesh, export_structure_meshes, scene_structure_to_dict
@@ -92,9 +97,22 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(f"Structure meshes saved: {exported}")
 
     refreshed_exports = export_scene(result.scene, settings.output_dir, settings.export_targets)
+    result.scene.proxy_geometry.attributes["engine_exports"] = tuple(refreshed_exports)
     if refreshed_exports:
         export_targets = ", ".join(bundle.target for bundle in refreshed_exports)
         print(f"Engine export bundles refreshed: {export_targets}")
+
+    report = evaluate_playability(result.scene)
+    report_path = write_playability_report(
+        report,
+        settings.output_dir / "playability_report.json",
+    )
+    metrics_path = write_playability_metrics_csv(
+        report,
+        settings.output_dir / "playability_metrics.csv",
+    )
+    print(f"Playability report saved: {report_path}")
+    print(f"Playability metrics CSV saved: {metrics_path}")
 
     return 0
 
