@@ -150,6 +150,16 @@ Each ablation run writes its own config copy and normal PlaySplat outputs under 
 
 Ablations help analyze trade-offs between voxel resolution, proxy mesh density, simplified collision mesh complexity, walkable area, semantic and affordance readiness, and overall playability metrics.
 
+## Generating Paper Assets
+
+Use `scripts/generate_paper_assets.py` to convert ablation outputs into paper-ready tables, figures, and Markdown summaries:
+
+```bash
+python scripts/generate_paper_assets.py --ablation-summary outputs/ablations/scene1/ablation_summary.csv --best-runs outputs/ablations/scene1/best_runs.json --output-dir outputs/paper_assets/scene1 --title "Scene 1 Ablation Study"
+```
+
+The generator writes cleaned CSV, Markdown, and LaTeX tables under `tables/`, matplotlib PNG figures under `figures/`, plus `summary.md`, `markdown_summary.md`, and `latex_tables.tex` for quick transfer into paper notes or a draft manuscript.
+
 ## Generating Debug Previews
 
 Use `scripts/generate_previews.py` to create quick PNG previews for a processed scene:
