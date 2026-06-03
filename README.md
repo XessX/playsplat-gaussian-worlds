@@ -166,6 +166,36 @@ scenes:
 
 Local private registries such as `configs/scenes.local.yaml` should stay uncommitted when they contain private dataset paths.
 
+## Staging Independent Benchmark Scenes
+
+The current `scene1` entry is an internal debug scene and should not be counted as paper benchmark evidence. Independent scenes should be staged under `data/scenes/<scene_id>/point_cloud.ply`, while private source paths live only in the ignored `configs/scenes.local.yaml`.
+
+Use the discovery tool to create a candidate report without modifying the registry:
+
+```bash
+python scripts/discover_candidate_plys.py --root "D:/Datasets" --output outputs/candidate_plys.csv
+```
+
+The discovery report marks Scientific Reports, sparse-view project, and PlaySplat generated-output paths as excluded. Review the CSV manually before staging any scene.
+
+Stage verified independent scenes with:
+
+```bash
+python scripts/stage_independent_scenes.py --scene scene_id=room01,input="D:/Datasets/room01/point_cloud.ply",category=indoor_room,notes="Independent indoor room scene" --registry configs/scenes.local.yaml --data-root data/scenes --copy
+```
+
+Validate the local registry before running benchmarks:
+
+```bash
+python scripts/validate_scene_registry.py --scene-registry configs/scenes.local.yaml
+```
+
+Only run the benchmark once `configs/scenes.local.yaml` contains independent `split: benchmark` scenes:
+
+```bash
+python scripts/run_benchmark.py --scene-registry configs/scenes.local.yaml --base-config configs/default.yaml --output-root outputs/benchmark/independent_v1 --split benchmark --voxel-size 0.1 --target-face-count 10000 --generate-previews
+```
+
 ## Running Multi-Scene Benchmarks
 
 Use `scripts/run_benchmark.py` to process a filtered scene registry with shared PlaySplat settings:
