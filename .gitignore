@@ -23,6 +23,8 @@ dist/
 # Research artifacts
 data/*
 !data/.gitkeep
+raw_captures/*
+!raw_captures/.gitkeep
 outputs/*
 !outputs/.gitkeep
 configs/*.local.yaml

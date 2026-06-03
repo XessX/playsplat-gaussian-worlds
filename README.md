@@ -166,6 +166,54 @@ scenes:
 
 Local private registries such as `configs/scenes.local.yaml` should stay uncommitted when they contain private dataset paths.
 
+## Preparing Independent 3DGS Scenes from Raw Captures
+
+Use `docs/raw_capture_to_3dgs_workflow.md` when creating new independent scenes from photos or video. PlaySplat does not train 3DGS models directly; these tools organize captures, extract frames, validate image sets, generate external training instructions, and help locate the final `point_cloud.ply`.
+
+Create a scene checklist:
+
+```bash
+python scripts/create_scene_checklist.py --scene-id room01 --category indoor_room --output raw_captures/room01/notes.md
+```
+
+Extract frames from a video when needed:
+
+```bash
+python scripts/extract_video_frames.py --video "D:/captures/room01/video.mp4" --output-dir raw_captures/room01/images --fps 2
+```
+
+`extract_video_frames.py` requires OpenCV. Install optional capture helpers with `pip install -e ".[capture]"` if frame extraction or optional blur scores are needed.
+
+Validate the image set:
+
+```bash
+python scripts/validate_capture_images.py --images raw_captures/room01/images --output raw_captures/room01/capture_quality_report.json
+```
+
+Generate an external 3DGS training plan:
+
+```bash
+python scripts/generate_3dgs_training_plan.py --scene-id room01 --images raw_captures/room01/images --output-dir raw_captures/room01 --trainer-name generic
+```
+
+After external training, find the final point cloud:
+
+```bash
+python scripts/find_3dgs_point_cloud.py --root "D:/captures/room01/training_output"
+```
+
+Stage the trained point cloud into PlaySplat:
+
+```bash
+python scripts/stage_independent_scenes.py --scene scene_id=room01,input="D:/captures/room01/training_output/point_cloud/iteration_30000/point_cloud.ply",category=indoor_room,notes="Independent indoor room scene" --registry configs/scenes.local.yaml --data-root data/scenes --copy
+```
+
+Validate the local registry:
+
+```bash
+python scripts/validate_scene_registry.py --scene-registry configs/scenes.local.yaml
+```
+
 ## Collecting Independent Benchmark Scenes
 
 Use `docs/benchmark_scene_collection_protocol.md` and `docs/scene_intake_template.csv` to collect independent scenes before counting them as benchmark evidence. Scientific Reports scenes, PlaySplat generated outputs, and internal debug scenes should remain separate from `split: benchmark` evidence.
