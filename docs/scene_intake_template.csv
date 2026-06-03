@@ -1,0 +1,9 @@
+scene_id,category,capture_location_type,source,split,raw_capture_path,trained_3dgs_output_path,staged_path,image_count,training_iteration,notes,license_or_permission,privacy_checked,ready_for_benchmark
+room01,indoor_room,indoor,independent,benchmark,,,,,,Independent indoor room scene.,,,no
+corridor01,corridor,indoor,independent,benchmark,,,,,,Independent corridor scene.,,,no
+desk01,furniture_heavy,indoor,independent,benchmark,,,,,,Independent furniture-heavy desk scene.,,,no
+outdoor01,outdoor_open,outdoor,independent,benchmark,,,,,,Independent outdoor open scene.,,,no
+garden01,outdoor_complex,outdoor,independent,benchmark,,,,,,Independent outdoor complex garden scene.,,,no
+stairs01,stairs,mixed,independent,benchmark,,,,,,Independent stairs scene.,,,no
+objectcluster01,object_cluster,indoor,independent,benchmark,,,,,,Independent object cluster scene.,,,no
+sparse01,sparse_structure,mixed,independent,benchmark,,,,,,Independent sparse-structure scene.,,,no

@@ -166,6 +166,47 @@ scenes:
 
 Local private registries such as `configs/scenes.local.yaml` should stay uncommitted when they contain private dataset paths.
 
+## Collecting Independent Benchmark Scenes
+
+Use `docs/benchmark_scene_collection_protocol.md` and `docs/scene_intake_template.csv` to collect independent scenes before counting them as benchmark evidence. Scientific Reports scenes, PlaySplat generated outputs, and internal debug scenes should remain separate from `split: benchmark` evidence.
+
+Step 1: fill `docs/scene_intake_template.csv` with scene provenance, capture notes, training iteration, staged path, license or permission notes, and privacy checks.
+
+Step 2: stage scenes under `data/scenes/<scene_id>/point_cloud.ply` and update the ignored local registry:
+
+```bash
+python scripts/stage_independent_scenes.py \
+  --scene scene_id=room01,input="D:/captures/room01/point_cloud.ply",category=indoor_room,notes="Independent indoor room scene" \
+  --registry configs/scenes.local.yaml \
+  --data-root data/scenes \
+  --copy
+```
+
+If the intake sheet is already filled, convert ready rows into the local registry:
+
+```bash
+python scripts/intake_to_registry.py --input-csv docs/scene_intake_template.csv --registry configs/scenes.local.yaml
+```
+
+Step 3: validate the registry:
+
+```bash
+python scripts/validate_scene_registry.py --scene-registry configs/scenes.local.yaml
+```
+
+Step 4: run the independent benchmark:
+
+```bash
+python scripts/run_benchmark.py \
+  --scene-registry configs/scenes.local.yaml \
+  --base-config configs/default.yaml \
+  --output-root outputs/benchmark/independent_v1 \
+  --split benchmark \
+  --voxel-size 0.1 \
+  --target-face-count 10000 \
+  --generate-previews
+```
+
 ## Staging Independent Benchmark Scenes
 
 The current `scene1` entry is an internal debug scene and should not be counted as paper benchmark evidence. Independent scenes should be staged under `data/scenes/<scene_id>/point_cloud.ply`, while private source paths live only in the ignored `configs/scenes.local.yaml`.

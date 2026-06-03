@@ -1,0 +1,56 @@
+scenes:
+  - scene_id: room01
+    input_path: data/scenes/room01/point_cloud.ply
+    category: indoor_room
+    source: independent
+    split: benchmark
+    notes: Independent indoor room scene.
+
+  - scene_id: corridor01
+    input_path: data/scenes/corridor01/point_cloud.ply
+    category: corridor
+    source: independent
+    split: benchmark
+    notes: Independent corridor scene.
+
+  - scene_id: desk01
+    input_path: data/scenes/desk01/point_cloud.ply
+    category: furniture_heavy
+    source: independent
+    split: benchmark
+    notes: Independent furniture-heavy scene.
+
+  - scene_id: outdoor01
+    input_path: data/scenes/outdoor01/point_cloud.ply
+    category: outdoor_open
+    source: independent
+    split: benchmark
+    notes: Independent outdoor open scene.
+
+  - scene_id: garden01
+    input_path: data/scenes/garden01/point_cloud.ply
+    category: outdoor_complex
+    source: independent
+    split: benchmark
+    notes: Independent outdoor complex scene.
+
+  - scene_id: stairs01
+    input_path: data/scenes/stairs01/point_cloud.ply
+    category: stairs
+    source: independent
+    split: benchmark
+    notes: Independent stairs scene.
+
+  - scene_id: objectcluster01
+    input_path: data/scenes/objectcluster01/point_cloud.ply
+    category: object_cluster
+    source: independent
+    split: benchmark
+    notes: Independent object cluster scene.
+
+  - scene_id: sparse01
+    input_path: data/scenes/sparse01/point_cloud.ply
+    category: sparse_structure
+    source: independent
+    split: benchmark
+    notes: Independent sparse-structure scene.
